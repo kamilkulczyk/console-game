@@ -1,0 +1,136 @@
+#include <iostream>
+#include <conio.h>
+using namespace std;
+
+class player
+{
+    public:
+        int x=1;
+        int y=1;
+        int score=0;
+        int xChange=0;
+        int yChange=0;
+        char previousObject=' ';
+
+        void addPoint()
+        {
+            score++;
+        }
+
+        void movePlayer(char movement)
+        {
+            xChange=0;
+            yChange=0;
+            switch(movement)
+                {
+                    case 'w':
+                        yChange--;
+                        break;
+                    case 's':
+                        yChange++;
+                        break;
+
+                    case 'a':
+                        xChange--;
+                        break;
+
+                    case 'd':
+                        xChange++;
+                        break;
+                }
+        }
+
+        void movePlayer()
+        {
+            x+=xChange;
+            y+=yChange;
+        }
+
+        void rememberPrevious(char item)
+        {
+            previousObject=item;
+        }
+
+};
+
+class box
+{
+    public:
+        int x=3;
+        int y=3;
+        char previousObject=' ';
+
+        void rememberPrevious(char item)
+        {
+            previousObject=item;
+        }
+};
+int main()
+{
+	player player1;
+	box box1;
+	char wl=219, es=' ', playerIcon='x', movement='a', boxIcon='@', mt=176;		//wall, emptySpace, pudelko
+
+
+	char level[7][10]={
+		{wl,wl ,wl ,wl ,wl ,wl ,wl ,wl ,wl ,wl},
+		{wl,' ',' ',' ',' ',' ',' ',' ',' ',wl},
+		{wl,' ',' ',' ',' ',' ',' ',' ',' ',wl},
+		{wl,' ',' ',' ',' ','y',' ',wl ,mt ,wl},
+		{wl,' ',' ',' ',' ',' ',' ',' ',' ',wl},
+		{wl,' ',' ',' ',' ',' ',' ',' ',' ',wl},
+		{wl,wl ,wl ,wl ,wl ,wl ,wl ,wl ,wl ,wl}
+					};
+
+printf("Welcome to easy console game!\nuse WSAD to move\npress any key...");
+getch();
+system("cls");
+while(movement!='1')
+{
+    level[player1.y][player1.x]=playerIcon;
+    level[box1.y][box1.x]=boxIcon;
+    for(int y=0;y<7;y++)
+		{
+			for(int x=0;x<10;x++)
+			{
+				cout<<level[y][x];
+			}
+			cout<<endl;
+		}
+    printf("score: %i",player1.score);
+
+    movement=getch();
+    player1.movePlayer(movement);
+
+    //checking if player can do that move
+    if(level[player1.y+player1.yChange][player1.x+player1.xChange]!=wl)
+    {
+        if(level[player1.y+player1.yChange][player1.x+player1.xChange]==boxIcon)
+        {
+           if(level[player1.y+2*player1.yChange][player1.x+2*player1.xChange]==wl)
+           {
+               player1.yChange=0;
+               player1.xChange=0;
+           }
+           level[box1.y][box1.x]=box1.previousObject;
+           box1.y+=player1.yChange;
+           box1.x+=player1.xChange;
+           if(level[box1.y][box1.x]=='y')
+           {
+               player1.addPoint();
+               box1.rememberPrevious(es);
+           }
+           else box1.rememberPrevious(level[box1.y][box1.x]);
+        }
+        level[player1.y][player1.x]=player1.previousObject;
+        player1.movePlayer();
+        player1.rememberPrevious(level[player1.y][player1.x]);
+    }
+
+    system("cls");
+    if(level[box1.y][box1.x]==mt) break;
+}
+    printf("YOU WON!\nYour score: %i",player1.score);
+
+	return 0;
+}
