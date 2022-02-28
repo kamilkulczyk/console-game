@@ -112,6 +112,7 @@ public:
                 items[i]=items[i++];
             }
             quantity--;
+            isFull=false;
         }
     }
 };
@@ -348,13 +349,14 @@ int main()
     p=&player;
 
     //creating objects
-    ObjectC n,w,b,q,c,f,d,z,u,k;
+    ObjectC n,w,b,q,c,f,d,z,u,t,k;
     n.character=' ';n.collision=false;//null
     w.character=219;//wall
 
     b.character='@';b.can_move=true;//box
     q.character='%';q.can_interact=true;//to check interaction
     u.character='u';u.can_interact=true;u.is_equipment=true;u.name="just a latter u";//to check equiping
+    t.character='t';t.can_interact=true;t.is_equipment=true;t.name="just a latter t";//to check equiping
     z.character='&';z.can_interact=true;//enter (fight) scene
     c.character='#';c.collision=false;c.give_point=true;//point
     f.character=176;f.collision=false;//place for a box
@@ -363,14 +365,14 @@ int main()
     //objects on the map
     ObjectC objects[10][20]={
         {w,w,w,w,w,w,w,w,w,w,w,w,w,w,w,w,w,w,w,w},
-        {w,n,u,n,n,n,w,n,n,n,n,n,n,n,n,n,n,n,n,w},
+        {w,n,n,t,n,n,w,n,n,n,n,n,n,n,n,n,n,n,n,w},
         {w,n,n,n,n,n,w,n,n,q,n,n,b,n,n,n,n,n,n,w},
         {w,b,n,w,n,n,w,n,n,b,n,n,q,n,n,n,n,n,n,w},
         {w,n,n,w,u,n,w,w,q,w,w,f,n,n,n,n,n,n,n,w},
         {w,f,n,n,n,u,d,n,n,n,w,n,n,c,n,z,n,n,n,w},
         {w,n,n,n,u,n,w,n,n,n,w,n,n,n,n,n,n,n,n,w},
         {w,f,b,n,n,n,w,n,c,n,w,n,n,n,n,n,n,n,n,w},
-        {w,u,n,n,n,n,w,n,n,n,w,n,n,n,n,n,n,n,n,w},
+        {w,c,n,n,n,n,w,n,n,n,w,n,n,n,n,n,n,n,n,w},
         {w,w,w,w,w,w,w,w,w,w,w,w,w,w,w,w,w,w,w,w}};
     //this is needed to know whats under object, like special places for boxes
     ObjectC level_map[10][20]={
