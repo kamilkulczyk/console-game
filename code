@@ -1,136 +1,435 @@
 #include <iostream>
+#include <stdlib.h>
+#include <cstdio>
 #include <conio.h>
+#include <windows.h>
+#include <cwchar>
+
 using namespace std;
 
-class player
-{
-    public:
-        int x=1;
-        int y=1;
-        int score=0;
-        int xChange=0;
-        int yChange=0;
-        char previousObject=' ';
+class ObjectC {//objects on the map, items
+public:
+    char character;
+    bool collision;
+    bool can_move;
+    bool can_interact;
+    bool disappear;
+    bool give_point;
+    bool good_place;
+    bool is_equipment;
+    int nr;
+    string name;
 
-        void addPoint()
-        {
-            score++;
-        }
-
-        void movePlayer(char movement)
-        {
-            xChange=0;
-            yChange=0;
-            switch(movement)
-                {
-                    case 'w':
-                        yChange--;
-                        break;
-                    case 's':
-                        yChange++;
-                        break;
-
-                    case 'a':
-                        xChange--;
-                        break;
-
-                    case 'd':
-                        xChange++;
-                        break;
-                }
-        }
-
-        void movePlayer()
-        {
-            x+=xChange;
-            y+=yChange;
-        }
-
-        void rememberPrevious(char item)
-        {
-            previousObject=item;
-        }
-
-};
-
-class box
-{
-    public:
-        int x=3;
-        int y=3;
-        char previousObject=' ';
-
-        void rememberPrevious(char item)
-        {
-            previousObject=item;
-        }
-};
-int main()
-{
-	player player1;
-	box box1;
-	char wl=219, es=' ', playerIcon='x', movement='a', boxIcon='@', mt=176;		//wall, emptySpace, pudelko
-
-
-	char level[7][10]={
-		{wl,wl ,wl ,wl ,wl ,wl ,wl ,wl ,wl ,wl},
-		{wl,' ',' ',' ',' ',' ',' ',' ',' ',wl},
-		{wl,' ',' ',' ',' ',' ',' ',' ',' ',wl},
-		{wl,' ',' ',' ',' ','y',' ',wl ,mt ,wl},
-		{wl,' ',' ',' ',' ',' ',' ',' ',' ',wl},
-		{wl,' ',' ',' ',' ',' ',' ',' ',' ',wl},
-		{wl,wl ,wl ,wl ,wl ,wl ,wl ,wl ,wl ,wl}
-					};
-
-printf("Welcome to easy console game!\nuse WSAD to move\npress any key...");
-getch();
-system("cls");
-while(movement!='1')
-{
-    level[player1.y][player1.x]=playerIcon;
-    level[box1.y][box1.x]=boxIcon;
-    for(int y=0;y<7;y++)
-		{
-			for(int x=0;x<10;x++)
-			{
-				cout<<level[y][x];
-			}
-			cout<<endl;
-		}
-    printf("score: %i",player1.score);
-
-    movement=getch();
-    player1.movePlayer(movement);
-
-    //checking if player can do that move
-    if(level[player1.y+player1.yChange][player1.x+player1.xChange]!=wl)
-    {
-        if(level[player1.y+player1.yChange][player1.x+player1.xChange]==boxIcon)
-        {
-           if(level[player1.y+2*player1.yChange][player1.x+2*player1.xChange]==wl)
-           {
-               player1.yChange=0;
-               player1.xChange=0;
-           }
-           level[box1.y][box1.x]=box1.previousObject;
-           box1.y+=player1.yChange;
-           box1.x+=player1.xChange;
-           if(level[box1.y][box1.x]=='y')
-           {
-               player1.addPoint();
-               box1.rememberPrevious(es);
-           }
-           else box1.rememberPrevious(level[box1.y][box1.x]);
-        }
-        level[player1.y][player1.x]=player1.previousObject;
-        player1.movePlayer();
-        player1.rememberPrevious(level[player1.y][player1.x]);
+    ObjectC() {//starting values, usually you change only few, so do it without constructor
+        collision=true;
+        can_move=false;
+        can_interact=false;
+        disappear=false;
+        give_point=false;
+        good_place=false;
+        is_equipment=false;
     }
 
-    system("cls");
-    if(level[box1.y][box1.x]==mt) break;
-}
-    printf("YOU WON!\nYour score: %i",player1.score);
+    void isInGoodPlace(unsigned char a) {//if "box" is in good place
+        if(character=='@'&&a==176) good_place=true;
+    }
 
-	return 0;
+    void interaction1() {//interaction for the object "%", to make it disappear
+        char a;
+        cout<<"You want to do this???\n1. YES\t2. NO";
+        a=getch();
+        switch(a) {
+        case '1':
+            disappear=true;
+            break;
+        case '2':
+            cout<<"\nOk, you do nothing";
+            Sleep(1000);
+            break;
+        }
+    }
+
+    void interactionText(string text) {//shows text after interaction
+        cout<<text;
+        Sleep(1500);
+    }
+
+    void showScene() {//a "real" loading sequence is in the main, don't know if needed
+        cout<<"Probably a fight scene!";
+        Sleep(1500);
+    }
+
+    void takeAction(unsigned char a) //matching object with interaction
+    {
+        string text;
+        switch(a) {
+        case '%':
+            interaction1();
+            break;
+        case 178:
+            if(disappear) text="Opening!";
+            else text="Door. Complete the task\nto open";
+            interactionText(text);
+            break;
+        case '&':
+            showScene();
+            nr=1;
+
+        }
+    }
+};
+
+class Equipment {
+public:
+    int quantity;
+    int eMax;
+    bool isFull;
+    ObjectC items[3];//array of items=object class
+    Equipment(){
+        quantity=0;
+        isFull=false;
+        eMax=2;
+    }
+
+    void addItem(ObjectC item) {
+        if(quantity<eMax) {
+            cout<<"Adding: "<<item.name; Sleep(1000);
+            items[quantity]=item;
+            quantity++;
+        } else {
+            cout<<"Full Equipment!"; Sleep(1000);
+            isFull=true;
+        }
+    }
+
+    void deleteItem(int nr) {
+        nr-=48; //-48 to make int nr from char
+        if(nr>quantity||nr==0) {
+                cout<<"\nno such item! "<<nr;Sleep(1000);
+        } else {
+            cout<<"\ndeleting item "<<nr;Sleep(1000);
+            for(int i=nr-1;i<quantity;i++) {//"pressing" every item down the list
+                items[i]=items[i++];
+            }
+            quantity--;
+        }
+    }
+};
+
+class Player {
+public:
+    int x,xv;
+    int y,yv;
+    int score;
+    char player_char;
+    Equipment equipment;
+    Player() {
+        x=1;
+        y=1;
+        player_char='x';
+        score=0;
+    }
+    void movement(char a) {//count movement vector
+        xv=0;yv=0;
+        switch(a) {
+            case 'a':
+                xv=-1;
+                break;
+            case 'd':
+                xv=+1;
+                break;
+            case 'w':
+                yv=-1;
+                break;
+            case 's':
+                yv=1;
+                break;
+        }
+    }
+    void vectorToMove(bool collision) {//if its ok to move, change position by adding vector
+        if(collision==false) {
+           x+=xv;
+           y+=yv;
+        }
+    }
+
+    void action() {//add point to the score
+        score++;
+    }
+};
+
+class Level {
+public:
+    Player *player;
+    int xSize=20,ySize=10;
+    ObjectC objects[10][20];
+    ObjectC levelMap[10][20];
+    int sceneNr;
+
+    Level(Player* player1, ObjectC objects1[10][20], ObjectC objects2[10][20]) {
+        player=player1;
+        sceneNr=0;
+        for(int y=0;y<10;y++) {
+            for(int x=0;x<20;x++) {
+                objects[y][x]=objects1[y][x];
+                levelMap[y][x]=objects2[y][x];
+            }
+        }
+    }
+    void checkConditions() {//check condition of completing the task
+        if(objects[5][1].good_place&&objects[7][1].good_place) {
+                objects[5][6].disappear=true;
+        }
+    }
+
+    void moveObject(int x,int y, int xv, int yv) {
+        objects[y+yv][x+xv]=objects[y][x];
+        removeObject(x,y);
+        objects[y+yv][x+xv].isInGoodPlace(levelMap[y+yv][x+xv].character);//check if object is in good place; part of the task
+    }
+
+    void removeObject(int x,int y) {//remove object and copy from level_map
+        objects[y][x]=levelMap[y][x];
+    }
+
+    bool isCollision(int x, int y) {//check collision
+        if(objects[y][x].collision) return true;
+        else return false;
+    }
+
+    bool givesPoint(int x, int y) {
+        if(objects[y][x].give_point) return true;
+        else return false;
+    }
+
+    bool canMove(int x, int y,int xv, int yv) {//check collisions and interactions
+        if(objects[y+yv][x+xv].can_move) {//if object is moving
+            if(isCollision(x+2*xv,y+2*yv)) return true;
+            else {
+                moveObject(x+xv,y+yv,xv,yv);
+                return false;
+            }
+        } else if(objects[y+yv][x+xv].can_interact) {
+            checkConditions();//check if eg. task is done
+            sceneNr=0;
+            objects[y+yv][x+xv].takeAction(objects[y+yv][x+xv].character);//load interaction from object methods
+            if(objects[y+yv][x+xv].is_equipment) {//if object goes to the equipment
+                player->equipment.addItem(objects[y+yv][x+xv]);
+                if(player->equipment.isFull==false) objects[y+yv][x+xv].disappear=true;//when picked, disappear
+            }
+            if(objects[y+yv][x+xv].disappear) removeObject(x+xv,y+yv);
+            sceneNr=objects[y+yv][x+xv].nr;
+            return true;
+        } else if(objects[y+yv][x+xv].give_point) {
+            player->score++;
+            removeObject(x+xv,y+yv);
+            return false;
+        }
+        else return isCollision(x+xv,y+yv);//probably wall
+    }
+
+};
+
+class Screen {//methods to print level, scenes, equipment etc on the screen
+public:
+    Level *level;
+    Player *player;
+    int w,h; //width and height of the view (how much player see)
+    bool endOfLine;
+    Screen(Player* player1, Level* level1, int w1, int h1) {
+        player=player1;
+        level=level1;
+        w=w1;
+        h=h1;
+    }
+
+    void printLevel(unsigned char scene[8][8]){//scene is right panel for right now
+        int y1=0;//counter for the scene lines
+        for(int y=0;y<level->ySize ;y++) {
+            endOfLine=false;
+            for(int x=0;x<level->xSize ;x++) {
+                if(player->x==x&&player->y==y)
+                    cout<<player->player_char;//player isnt strictly on the map, he's just printed there
+                else if((x>=player->x-w/2||x>=level->xSize-w)&&(x<=player->x+w/2-1||x<w)&&//player view
+                        (y>=player->y-h/2||y>=level->ySize-h)&&(y<=player->y+h/2-1||y<h)) {
+                    cout<<level->objects[y][x].character;
+                    endOfLine=true;
+                }
+            }
+            if(endOfLine) {
+                if(y1<h) for(int x=0;x<w ;x++) {//print scene(panel)
+                    cout<<scene[y1][x];
+                }
+                y1++;
+                cout<<endl;
+            }
+        }
+    }
+
+    void printScene(unsigned char scene[10][20]){//print passed scene, eg. fight scene, shop scene
+        for(int y=0;y<level->ySize;y++) {
+            for(int x=0;x<level->xSize ;x++) {
+                cout<<scene[y][x];
+            }
+            cout<<endl;
+        }
+    }
+
+    void showEquipment() {
+        char a;
+        do {
+            system("CLS");
+            printf("score: %i\n",player->score);
+
+            int i=0;
+            for(int y=0;y<9;y++) {
+                for(int x=0;x<20;x++) {
+                    if(y==0||y==8) cout<<(unsigned char)205;
+                }
+                if(y==1) cout<<"Equipment: ";
+                if(y==6) cout<<"press 'd' to delete:";
+                if(y==7) cout<<"press 'e' to quit:";
+                else if(i<player->equipment.quantity) {
+                    if(y==i+2) {
+                        cout<<"item "<<i+1<<":"<<player->equipment.items[i].character;
+                        i++;
+                    }
+                }
+                cout<<endl;
+            }
+
+            a=getch();
+            switch (a) {
+            case 'd':
+                int nr;
+                cout<<"\ngive nr of the item: ";
+                nr=(int)getch();
+                player->equipment.deleteItem(nr);
+                break;
+            }
+        } while(a!='e'); //if 'e' quit the loop and equipment screen
+    }
+
+};
+
+int main()
+{
+    { //console window and font settings
+      HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
+
+        COORD a;
+        a.X = 90;
+        a.Y = 300;
+
+        SMALL_RECT rect;
+        rect.Top = 0;
+        rect.Left = 0;
+        rect.Bottom = 15;
+        rect.Right = 22;
+
+
+        SetConsoleScreenBufferSize(handle, a);
+
+        SetConsoleWindowInfo(handle, 1, &rect);
+
+        CONSOLE_FONT_INFOEX cfi;
+        cfi.cbSize = sizeof(cfi);
+        cfi.nFont = 0;
+        cfi.dwFontSize.X = 30;                   // Width of each character in the font
+        cfi.dwFontSize.Y = 30;                  // Height
+        cfi.FontFamily = FF_DONTCARE;
+        cfi.FontWeight = FW_NORMAL;
+        wcscpy(cfi.FaceName, L"Consolas"); // Choose your font
+        SetCurrentConsoleFontEx(GetStdHandle(STD_OUTPUT_HANDLE), FALSE, &cfi);
+    }
+
+    Player player;
+    Player *p;
+    p=&player;
+
+    //creating objects
+    ObjectC n,w,b,q,c,f,d,z,u,k;
+    n.character=' ';n.collision=false;//null
+    w.character=219;//wall
+
+    b.character='@';b.can_move=true;//box
+    q.character='%';q.can_interact=true;//to check interaction
+    u.character='u';u.can_interact=true;u.is_equipment=true;u.name="just a latter u";//to check equiping
+    z.character='&';z.can_interact=true;//enter (fight) scene
+    c.character='#';c.collision=false;c.give_point=true;//point
+    f.character=176;f.collision=false;//place for a box
+    d.character=178;d.can_interact=true; //door
+
+    //objects on the map
+    ObjectC objects[10][20]={
+        {w,w,w,w,w,w,w,w,w,w,w,w,w,w,w,w,w,w,w,w},
+        {w,n,u,n,n,n,w,n,n,n,n,n,n,n,n,n,n,n,n,w},
+        {w,n,n,n,n,n,w,n,n,q,n,n,b,n,n,n,n,n,n,w},
+        {w,b,n,w,n,n,w,n,n,b,n,n,q,n,n,n,n,n,n,w},
+        {w,n,n,w,u,n,w,w,q,w,w,f,n,n,n,n,n,n,n,w},
+        {w,f,n,n,n,u,d,n,n,n,w,n,n,c,n,z,n,n,n,w},
+        {w,n,n,n,u,n,w,n,n,n,w,n,n,n,n,n,n,n,n,w},
+        {w,f,b,n,n,n,w,n,c,n,w,n,n,n,n,n,n,n,n,w},
+        {w,u,n,n,n,n,w,n,n,n,w,n,n,n,n,n,n,n,n,w},
+        {w,w,w,w,w,w,w,w,w,w,w,w,w,w,w,w,w,w,w,w}};
+    //this is needed to know whats under object, like special places for boxes
+    ObjectC level_map[10][20]={
+        {w,w,w,w,w,w,w,w,w,w,w,w,w,w,w,w,w,w,w,w},
+        {w,n,n,n,n,n,w,n,n,n,n,n,n,n,n,n,n,n,n,w},
+        {w,n,n,n,n,n,w,n,n,n,n,n,n,n,n,n,n,n,n,w},
+        {w,n,n,w,n,n,w,n,n,n,n,n,n,n,n,n,n,n,n,w},
+        {w,n,n,w,n,n,w,w,n,n,n,f,n,n,n,n,n,n,n,w},
+        {w,f,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,w},
+        {w,n,n,n,n,n,w,n,n,n,n,n,n,n,n,n,n,n,n,w},
+        {w,f,n,n,n,n,w,n,n,n,n,n,n,n,n,n,n,n,n,w},
+        {w,n,n,n,n,n,w,n,n,n,n,n,n,n,n,n,n,n,n,w},
+        {w,w,w,w,w,w,w,w,w,w,w,w,w,w,w,w,w,w,w,w}};
+    char r1=186,r2=205,m=' ';
+    //panel right to the screen, useless. Just tried to print the panel independently to the level
+    unsigned char right_panel1[8][8]={
+        {201,r2,r2,r2,r2,r2,r2,187},
+        {r1,'s','i','d','e',m,m,r1},
+        {r1,'p','a','n','e','l',m,r1},
+        {r1,m,m,m,m,m,m,r1},
+        {r1,'p','r','e','s','s',m,r1},
+        {r1,96,'e',96,m,m,m,r1},
+        {r1,m,m,m,m,m,m,r1},
+        {200,r2,r2,r2,r2,r2,r2,188}};
+
+    //scene to show after special action, like enter fight, shop etc., can be picture made of chars
+    unsigned char scene1[10][20]={
+        {201,r2,r2,r2,r2,r2,r2,r2,r2,r2,r2,r2,r2,r2,r2,r2,r2,r2,r2,187},
+        {r1,'e','k','r','a','n',m,m,m,m,m,m,m,m,m,m,m,m,m,r1},
+        {r1,m,m,m,m,m,m,m,m,m,m,m,m,m,m,m,m,m,m,r1},
+        {r1,m,m,m,m,m,m,m,m,m,m,m,m,m,m,m,m,m,m,r1},
+        {r1,m,m,m,m,m,m,m,m,m,m,m,m,m,m,m,m,m,m,r1},
+        {r1,m,m,m,m,m,m,m,m,m,m,m,m,m,m,m,m,m,m,r1},
+        {r1,m,m,m,m,m,m,m,m,m,m,m,m,m,m,m,m,m,m,r1},
+        {r1,m,m,m,m,m,m,m,m,m,m,m,m,m,m,m,m,m,m,r1},
+        {r1,m,m,m,m,m,m,m,m,m,m,m,m,m,m,m,m,m,m,r1},
+        {200,r2,r2,r2,r2,r2,r2,r2,r2,r2,r2,r2,r2,r2,r2,r2,r2,r2,r2,188}};
+
+    Level level(p, objects,level_map);
+    Level *l;
+    l=&level;
+
+    int width=8,height=8;//how much player can see
+    Screen screen(p,l,width,height);
+    char key;
+
+    while(true) {
+        system ("CLS");
+        printf("score: %i\n",player.score);
+        if(level.sceneNr==1) screen.printScene(scene1);//load scene if needed
+        else screen.printLevel(right_panel1);
+
+        key=getch();
+        if(key=='e') screen.showEquipment();//if 'e', shows and enters equipment screen
+
+        player.movement(key);//count players move, but do nothing
+        player.vectorToMove(level.canMove(player.x,player.y,player.xv,player.yv));//check if player can do that move, make all the interactions, then move is made
+        Sleep(100);
+
+    }
+    return 0;
 }
