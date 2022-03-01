@@ -9,6 +9,7 @@ As 'x' player moves on the map by WSAD and interact with objects:
 
 This is a testing level with no design, just to test mechanics.
 On the right there is 'panel' which do nothing at the moment but tests printing things independetly to the level map.
+
 ![image](https://user-images.githubusercontent.com/61236761/156192579-e1e39c1f-2508-46ac-87af-ffaeee2c3801.png)
 
 After pressing 'e' equipment menu shows up. It's a test of changing screen to some menu.
